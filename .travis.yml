@@ -20,4 +20,4 @@ install: true
 script:
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
   - dep ensure
-  - go test -v -covermode=count -race ./...  # Run all the tests with the race detector enabled
+  - go test ./... -v -covermode=count
