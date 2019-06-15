@@ -3,7 +3,7 @@ dist: xenial
 
 language: go
 
-env: GO111MODULE=on GOFLAGS='-mod vendor'
+env: GO15VENDOREXPERIMENT=1
 
 go:
 - 1.12.x
