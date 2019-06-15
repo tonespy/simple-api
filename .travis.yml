@@ -22,5 +22,6 @@ install: true
 # failing test, we want to see both. Configure golangci-lint with a
 # .golangci.yml file at the top level of your repo.
 script:
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
   - dep ensure
   - go test -v -covermode=count -race ./...  # Run all the tests with the race detector enabled
