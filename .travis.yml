@@ -1,12 +1,14 @@
 # use the latest ubuntu environment (18.04) available on travis
-dist: xenial
-
 language: go
 
 env: GO15VENDOREXPERIMENT=1
 
 go:
-- 1.12.x
+  - "1.8"
+  - "1.9"
+  - "1.10"
+  - "1.11"
+  - tip
 
 # Only clone the most recent commit.
 git:
@@ -15,16 +17,6 @@ git:
 # Skip the install step. Don't `go get` dependencies. Only build with the code
 # in vendor/
 install: true
-
-# Don't email me the results of the test runs.
-notifications:
-  email: true
-
-# Anything in before_script that returns a nonzero exit code will flunk the
-# build and immediately stop. It's sorta like having set -e enabled in bash.
-# Make sure golangci-lint is vendored.
-before_script:
-  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
 
 # script always runs to completion (set +e). If we have linter issues AND a
 # failing test, we want to see both. Configure golangci-lint with a
