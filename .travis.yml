@@ -6,6 +6,12 @@ env: GO15VENDOREXPERIMENT=1
 go:
   - tip
 
+# Only clone dev or master branch
+branches:
+  only:
+    - master
+    - dev
+
 # Only clone the most recent commit.
 git:
   depth: 1
