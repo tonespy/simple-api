@@ -1,6 +1,9 @@
 package router
 
-import "github.com/julienschmidt/httprouter"
+import (
+	"github.com/julienschmidt/httprouter"
+	"github.com/tonespy/simple-api/app"
+)
 
 /*
 Route is a struct for handling all routes
@@ -21,10 +24,7 @@ func NewRouter(routes []Route) *httprouter.Router {
 
 	router := httprouter.New()
 	for _, route := range routes {
-		var handle httprouter.Handle
-
-		handle = route.HandlerFunction
-		// handle = Lo
+		handle := app.Logger(route.HandlerFunction)
 
 		router.Handle(route.Method, route.Path, handle)
 	}
