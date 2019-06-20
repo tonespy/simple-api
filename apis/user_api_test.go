@@ -15,6 +15,15 @@ func TestUserAPI_GenerateUserRoutes(t *testing.T) {
 	assert.True(t, len(routes) > 0)
 }
 
+func TestUserAPI_FailingDecode(t *testing.T) {
+	bufferBody := `{"email: "abc@email.com", "password": "password"}`
+	req, err := http.NewRequest("POST", "/user", bytes.NewBufferString(bufferBody))
+	assert.Nil(t, err)
+
+	recorder := mockRequestHandler(req, "POST", "/user", createUser)
+	assert.Equal(t, recorder.Code, http.StatusBadRequest)
+}
+
 func TestUserAPI_CreateUser(t *testing.T) {
 	// This request should panic in the recorder because, we passed a nil body
 	req, err := http.NewRequest("POST", "/user", nil)
