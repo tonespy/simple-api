@@ -1,7 +1,7 @@
 package apis
 
 import (
-	"fmt"
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,11 +16,25 @@ func TestUserAPI_GenerateUserRoutes(t *testing.T) {
 }
 
 func TestUserAPI_CreateUser(t *testing.T) {
+	// This request should panic in the recorder because, we passed a nil body
 	req, err := http.NewRequest("POST", "/user", nil)
 	assert.Nil(t, err, "Invalid Post request")
 
-	createTest1 := mockRequestHandler(req, "POST", "/user", createUser)
-	fmt.Println("Create Test Code: ", createTest1.Code)
+	assert.Panics(t, func() { mockRequestHandler(req, "POST", "/user", createUser) })
+
+	bufferBody := `{"email": "abc@email.com", "password": "password"}`
+	req, err = http.NewRequest("POST", "/user", bytes.NewBufferString(bufferBody))
+	assert.Nil(t, err)
+
+	recorder := mockRequestHandler(req, "POST", "/user", createUser)
+	assert.Equal(t, recorder.Code, http.StatusBadRequest)
+
+	bufferBody = `{"first_name": "Abubakar", "last_name": "Oladeji", "email": "abc@email.com", "password": "password"}`
+	req, err = http.NewRequest("POST", "/user", bytes.NewBufferString(bufferBody))
+	assert.Nil(t, err)
+
+	recorder = mockRequestHandler(req, "POST", "/user", createUser)
+	assert.Equal(t, recorder.Code, http.StatusCreated)
 }
 
 // mockRequestHandler :- Mocks a handler and returns a httptest.ResponseRecorder
