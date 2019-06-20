@@ -2,7 +2,6 @@ package apis
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -26,7 +25,6 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 	var user models.User
 	err := decode(r, &user)
 	if err != nil {
-		fmt.Println("Error: ", err)
 		validationData := errors.Params{
 			"first_name": "required",
 			"last_name":  "required",
