@@ -19,10 +19,8 @@ func WriteResponse(w http.ResponseWriter, resp *APIResponse) {
 	if resp == nil {
 		panic("Please provide a valid response")
 	}
-	responseJSON, err := json.Marshal(resp)
-	if err != nil {
-		panic(err)
-	}
+
+	responseJSON, _ := json.Marshal(resp)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(resp.Status)
 	w.Write(responseJSON)
