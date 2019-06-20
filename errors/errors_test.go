@@ -3,6 +3,7 @@ package errors
 import (
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,18 @@ func TestUnauthorized(t *testing.T) {
 
 func TestGenericError(t *testing.T) {
 
-	e := GenericError(450, Params{"x": "xyz"},  "INVALID_TOKEN", "Provide a valid user token")
+	e := GenericError(450, Params{"x": "xyz"}, "INVALID_TOKEN", "Provide a valid user token")
 	assert.Equal(t, 450, e.Status)
 	assert.Equal(t, "INVALID_TOKEN", e.ErrorCode)
+}
+
+func TestResponse_WriteErrorResponse(t *testing.T) {
+	recorder := httptest.NewRecorder()
+
+	// This should make the app panic
+	assert.Panics(t, func() { WriteErrorResponse(recorder, nil) }, "Panic failed")
+
+	// This should pass
+	apiErr := GenericError(http.StatusBadRequest, Params{"a": "xyz"}, "BAD_REQUEST", "Please provide a valid response")
+	assert.NotPanics(t, func() { WriteErrorResponse(recorder, apiErr) })
 }
