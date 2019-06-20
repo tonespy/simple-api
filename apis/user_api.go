@@ -21,11 +21,25 @@ type ok interface {
 // post /user
 func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	var user models.User
-	json.NewDecoder(r.Body).Decode(&user)
+	err := decode(r, &user)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		validationData := errors.Params{
+			"first_name": "required",
+			"last_name":  "required",
+			"password":   "required",
+			"email":      "required",
+		}
+		errResp := errors.NewAPIError(http.StatusBadRequest, "BAD_REQUEST", "Please provide valid user data.", validationData)
+		errors.WriteErrorResponse(w, errResp)
+	}
 
 	user.CreatedAt = time.Now().Local().String()
+	user.UpdatedAt = time.Now().Local().String()
 
-	resp := response.GenericResponse(201, "User Created Successfully.", user)
+	models.UserStore[strconv.Itoa(user.ID)] = user
+
+	resp := response.GenericResponse(http.StatusCreated, "User Created Successfully.", user)
 
 	response.WriteResponse(w, resp)
 }
