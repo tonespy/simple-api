@@ -54,6 +54,14 @@ func TestUserAPI_GetUser(t *testing.T) {
 	recorder := mockRequestHandler(req, "GET", "/user/:id", getUser)
 	assert.Equal(t, recorder.Code, http.StatusNotFound)
 
+	// This should fail because an invalid UserID was provided
+	req, err = http.NewRequest("GET", "/user/abc", nil)
+	assert.Nil(t, err)
+
+	recorder = mockRequestHandler(req, "GET", "/user/:id", getUser)
+	assert.Contains(t, recorder.Body.String(), "Invalid ID")
+	assert.Equal(t, recorder.Code, http.StatusNotFound)
+
 	// Create user
 	bufferBody := `{"first_name": "Abubakar", "last_name": "Oladeji", "email": "abc@email.com", "password": "password"}`
 	req, err = http.NewRequest("POST", "/user", bytes.NewBufferString(bufferBody))

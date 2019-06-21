@@ -52,7 +52,7 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	userID := params.ByName("id")
 	if _, err := strconv.Atoi(userID); err != nil {
-		apiError := errors.NotFound("Invalid ID" + userID)
+		apiError := errors.NotFound("Invalid ID " + userID)
 		errors.WriteErrorResponse(w, apiError)
 		return
 	}
