@@ -20,7 +20,7 @@ type ok interface {
 }
 
 // CreateUser :- Handler for creating a user
-// post /user
+// POST /user
 func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	var user models.User
 	err := decode(r, &user)
