@@ -38,6 +38,7 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 
 	user.CreatedAt = time.Now().Local().String()
 	user.UpdatedAt = time.Now().Local().String()
+	user.ID = models.GenerateUserID()
 
 	models.UserStore[strconv.Itoa(user.ID)] = user
 
