@@ -47,6 +47,26 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 	response.WriteResponse(w, resp)
 }
 
+// getUser :- Handler for getting user information
+// GET /user/:id
+func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	userID := params.ByName("id")
+	if _, err := strconv.Atoi(userID); err != nil {
+		apiError := errors.NotFound("Invalid ID" + userID)
+		errors.WriteErrorResponse(w, apiError)
+		return
+	}
+
+	if userInfo, ok := models.UserStore[userID]; ok {
+		resp := response.GenericResponse(http.StatusFound, "User found successfully", userInfo)
+		response.WriteResponse(w, resp)
+		return
+	}
+
+	apiError := errors.NotFound("Invalid ID " + userID)
+	errors.WriteErrorResponse(w, apiError)
+}
+
 // GenerateUserRoutes :- Helper function for collating user routes
 func GenerateUserRoutes() []router.Route {
 	// Create user setup
