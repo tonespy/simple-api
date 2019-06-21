@@ -20,7 +20,7 @@ type ok interface {
 }
 
 // CreateUser :- Handler for creating a user
-// post /user
+// POST /user
 func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	var user models.User
 	err := decode(r, &user)
@@ -33,16 +33,38 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 		}
 		errResp := errors.NewAPIError(http.StatusBadRequest, "BAD_REQUEST", "Please provide valid user data.", validationData)
 		errors.WriteErrorResponse(w, errResp)
+		return
 	}
 
 	user.CreatedAt = time.Now().Local().String()
 	user.UpdatedAt = time.Now().Local().String()
+	user.ID = models.GenerateUserID()
 
 	models.UserStore[strconv.Itoa(user.ID)] = user
 
 	resp := response.GenericResponse(http.StatusCreated, "User Created Successfully.", user)
 
 	response.WriteResponse(w, resp)
+}
+
+// getUser :- Handler for getting user information
+// GET /user/:id
+func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	userID := params.ByName("id")
+	if _, err := strconv.Atoi(userID); err != nil {
+		apiError := errors.NotFound("Invalid ID " + userID)
+		errors.WriteErrorResponse(w, apiError)
+		return
+	}
+
+	if userInfo, ok := models.UserStore[userID]; ok {
+		resp := response.GenericResponse(http.StatusFound, "User found successfully", userInfo)
+		response.WriteResponse(w, resp)
+		return
+	}
+
+	apiError := errors.NotFound("Invalid ID " + userID)
+	errors.WriteErrorResponse(w, apiError)
 }
 
 // GenerateUserRoutes :- Helper function for collating user routes
@@ -55,8 +77,16 @@ func GenerateUserRoutes() []router.Route {
 		HandlerFunction: createUser,
 	}
 
+	// Get user setup
+	getUserRoute := router.Route{
+		Name:            "Get User",
+		Method:          "POST",
+		Path:            "/user/:id",
+		HandlerFunction: getUser,
+	}
+
 	// collate all routes
-	routes := []router.Route{createUserRoute}
+	routes := []router.Route{createUserRoute, getUserRoute}
 
 	return routes
 }
