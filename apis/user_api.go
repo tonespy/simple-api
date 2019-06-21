@@ -33,6 +33,7 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 		}
 		errResp := errors.NewAPIError(http.StatusBadRequest, "BAD_REQUEST", "Please provide valid user data.", validationData)
 		errors.WriteErrorResponse(w, errResp)
+		return
 	}
 
 	user.CreatedAt = time.Now().Local().String()
