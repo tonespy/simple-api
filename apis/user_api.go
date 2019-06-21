@@ -77,8 +77,16 @@ func GenerateUserRoutes() []router.Route {
 		HandlerFunction: createUser,
 	}
 
+	// Get user setup
+	getUserRoute := router.Route{
+		Name:            "Get User",
+		Method:          "POST",
+		Path:            "/user/:id",
+		HandlerFunction: getUser,
+	}
+
 	// collate all routes
-	routes := []router.Route{createUserRoute}
+	routes := []router.Route{createUserRoute, getUserRoute}
 
 	return routes
 }
