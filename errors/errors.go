@@ -14,7 +14,7 @@ func InternalServerError(err error) *APIError {
 // NotFound creates a new API error representing a resource-not-found error (HTTP 404)
 func NotFound(resource string) *APIError {
 	defaultMsg := "INTERNAL_SERVER_ERROR"
-	return NewAPIError(http.StatusNotFound, defaultMsg, defaultMsg, Params{"resource": resource})
+	return NewAPIError(http.StatusNotFound, defaultMsg, defaultMsg, Params{"error": resource})
 }
 
 // Unauthorized creates a new API error representing an authentication failure (HTTP 401)
