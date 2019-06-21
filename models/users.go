@@ -1,5 +1,7 @@
 package models
 
+import "strconv"
+
 type missingFieldError string
 
 func (m missingFieldError) Error() string {
@@ -41,3 +43,19 @@ func (u *User) OK() error {
 
 // UserStore :- This is a dictionary of users
 var UserStore = make(map[string]User)
+
+// GenerateUserID :- This helper function generates new user id
+func GenerateUserID() int {
+	if len(UserStore) <= 0 {
+		return 1
+	}
+	var keys []string
+	for k := range UserStore {
+		keys = append(keys, k)
+	}
+
+	lastIndex := keys[len(keys)-1]
+	intLastIndex, _ := strconv.Atoi(lastIndex)
+
+	return intLastIndex + 1
+}
