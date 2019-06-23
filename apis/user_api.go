@@ -67,6 +67,53 @@ func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	errors.WriteErrorResponse(w, apiError)
 }
 
+// updateUser :- Handler for updating user information
+// PUT /user/:id
+func updateUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	userID := params.ByName("id")
+	if _, err := strconv.Atoi(userID); err != nil {
+		apiError := errors.NotFound("Invalid ID " + userID)
+		errors.WriteErrorResponse(w, apiError)
+		return
+	}
+
+	if _, ok := models.UserStore[userID]; !ok {
+		apiError := errors.NotFound("Invalid ID " + userID)
+		errors.WriteErrorResponse(w, apiError)
+		return
+	}
+
+	userInfo := models.UserStore[userID]
+
+	var updatedUser models.User
+	errorParam := errors.Params{"allowedParams": []string{"first_name", "last_name"}}
+
+	if r.Body == nil {
+		errors.WriteErrorResponse(w, errors.GenericError(http.StatusBadRequest, errorParam, "INVALID_DATA", "Please provide valid data"))
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&updatedUser); err != nil {
+		errors.WriteErrorResponse(w, errors.GenericError(http.StatusBadRequest, errorParam, "INVALID_DATA", "Please provide valid data"))
+		return
+	}
+
+	if len(updatedUser.Firstname) > 0 {
+		userInfo.Firstname = updatedUser.Firstname
+	}
+
+	if len(updatedUser.Lastname) > 0 {
+		userInfo.Lastname = updatedUser.Lastname
+	}
+
+	userInfo.UpdatedAt = time.Now().Local().String()
+
+	models.UserStore[userID] = userInfo
+
+	resp := response.GenericResponse(http.StatusOK, "User updated successfully.", userInfo)
+	response.WriteResponse(w, resp)
+}
+
 // GenerateUserRoutes :- Helper function for collating user routes
 func GenerateUserRoutes() []router.Route {
 	// Create user setup
@@ -80,13 +127,21 @@ func GenerateUserRoutes() []router.Route {
 	// Get user setup
 	getUserRoute := router.Route{
 		Name:            "Get User",
-		Method:          "POST",
+		Method:          "GET",
 		Path:            "/user/:id",
 		HandlerFunction: getUser,
 	}
 
+	// Update user setup
+	updateUserRoute := router.Route{
+		Name:            "Update User",
+		Method:          "PUT",
+		Path:            "/user/:id",
+		HandlerFunction: updateUser,
+	}
+
 	// collate all routes
-	routes := []router.Route{createUserRoute, getUserRoute}
+	routes := []router.Route{createUserRoute, getUserRoute, updateUserRoute}
 
 	return routes
 }
