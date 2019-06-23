@@ -2,12 +2,13 @@ package apis
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/tonespy/simple-api/errors"
+	appError "github.com/tonespy/simple-api/errors"
 	"github.com/tonespy/simple-api/models"
 	"github.com/tonespy/simple-api/response"
 	"github.com/tonespy/simple-api/router"
@@ -25,14 +26,14 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 	var user models.User
 	err := decode(r, &user)
 	if err != nil {
-		validationData := errors.Params{
+		validationData := appError.Params{
 			"first_name": "required",
 			"last_name":  "required",
 			"password":   "required",
 			"email":      "required",
 		}
-		errResp := errors.NewAPIError(http.StatusBadRequest, "BAD_REQUEST", "Please provide valid user data.", validationData)
-		errors.WriteErrorResponse(w, errResp)
+		errResp := appError.NewAPIError(http.StatusBadRequest, "BAD_REQUEST", "Please provide valid user data.", validationData)
+		appError.WriteErrorResponse(w, errResp)
 		return
 	}
 
@@ -52,8 +53,8 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	userID := params.ByName("id")
 	if _, err := strconv.Atoi(userID); err != nil {
-		apiError := errors.NotFound("Invalid ID " + userID)
-		errors.WriteErrorResponse(w, apiError)
+		apiError := appError.NotFound("Invalid ID " + userID)
+		appError.WriteErrorResponse(w, apiError)
 		return
 	}
 
@@ -63,8 +64,55 @@ func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		return
 	}
 
-	apiError := errors.NotFound("Invalid ID " + userID)
-	errors.WriteErrorResponse(w, apiError)
+	apiError := appError.NotFound("Invalid ID " + userID)
+	appError.WriteErrorResponse(w, apiError)
+}
+
+// updateUser :- Handler for updating user information
+// PUT /user/:id
+func updateUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	userID := params.ByName("id")
+	if _, err := strconv.Atoi(userID); err != nil {
+		apiError := appError.NotFound("Invalid ID " + userID)
+		appError.WriteErrorResponse(w, apiError)
+		return
+	}
+
+	if _, ok := models.UserStore[userID]; !ok {
+		apiError := appError.NotFound("Invalid ID " + userID)
+		appError.WriteErrorResponse(w, apiError)
+		return
+	}
+
+	userInfo := models.UserStore[userID]
+
+	var updatedUser models.User
+	errorParam := appError.Params{"allowedParams": []string{"first_name", "last_name"}}
+
+	if r.Body == nil {
+		appError.WriteErrorResponse(w, appError.GenericError(http.StatusBadRequest, errorParam, "INVALID_DATA", "Please provide valid data"))
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&updatedUser); err != nil {
+		appError.WriteErrorResponse(w, appError.GenericError(http.StatusBadRequest, errorParam, "INVALID_DATA", "Please provide valid data"))
+		return
+	}
+
+	if len(updatedUser.Firstname) > 0 {
+		userInfo.Firstname = updatedUser.Firstname
+	}
+
+	if len(updatedUser.Lastname) > 0 {
+		userInfo.Lastname = updatedUser.Lastname
+	}
+
+	userInfo.UpdatedAt = time.Now().Local().String()
+
+	models.UserStore[userID] = userInfo
+
+	resp := response.GenericResponse(http.StatusOK, "User updated successfully.", userInfo)
+	response.WriteResponse(w, resp)
 }
 
 // GenerateUserRoutes :- Helper function for collating user routes
@@ -80,13 +128,21 @@ func GenerateUserRoutes() []router.Route {
 	// Get user setup
 	getUserRoute := router.Route{
 		Name:            "Get User",
-		Method:          "POST",
+		Method:          "GET",
 		Path:            "/user/:id",
 		HandlerFunction: getUser,
 	}
 
+	// Update user setup
+	updateUserRoute := router.Route{
+		Name:            "Update User",
+		Method:          "PUT",
+		Path:            "/user/:id",
+		HandlerFunction: updateUser,
+	}
+
 	// collate all routes
-	routes := []router.Route{createUserRoute, getUserRoute}
+	routes := []router.Route{createUserRoute, getUserRoute, updateUserRoute}
 
 	return routes
 }
@@ -95,6 +151,9 @@ func GenerateUserRoutes() []router.Route {
 // later to support different formats and behaviours without
 // changing the interface.
 func decode(r *http.Request, v ok) error {
+	if r.Body == nil {
+		return errors.New("Invalid Body")
+	}
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
 		return err
 	}
