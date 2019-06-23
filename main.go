@@ -13,5 +13,7 @@ func main() {
 	userRoutes := apis.GenerateUserRoutes()
 	router := router.NewRouter(userRoutes)
 
-	log.Fatal(http.ListenAndServe(":8540", router))
+	addr := ":8540"
+	log.Println("Listening on", addr)
+	log.Fatal(http.ListenAndServe(addr, router))
 }
