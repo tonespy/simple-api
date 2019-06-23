@@ -2,12 +2,13 @@ package apis
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/tonespy/simple-api/errors"
+	appError "github.com/tonespy/simple-api/errors"
 	"github.com/tonespy/simple-api/models"
 	"github.com/tonespy/simple-api/response"
 	"github.com/tonespy/simple-api/router"
@@ -25,14 +26,14 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 	var user models.User
 	err := decode(r, &user)
 	if err != nil {
-		validationData := errors.Params{
+		validationData := appError.Params{
 			"first_name": "required",
 			"last_name":  "required",
 			"password":   "required",
 			"email":      "required",
 		}
-		errResp := errors.NewAPIError(http.StatusBadRequest, "BAD_REQUEST", "Please provide valid user data.", validationData)
-		errors.WriteErrorResponse(w, errResp)
+		errResp := appError.NewAPIError(http.StatusBadRequest, "BAD_REQUEST", "Please provide valid user data.", validationData)
+		appError.WriteErrorResponse(w, errResp)
 		return
 	}
 
@@ -52,8 +53,8 @@ func createUser(w http.ResponseWriter, r *http.Request, params httprouter.Params
 func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	userID := params.ByName("id")
 	if _, err := strconv.Atoi(userID); err != nil {
-		apiError := errors.NotFound("Invalid ID " + userID)
-		errors.WriteErrorResponse(w, apiError)
+		apiError := appError.NotFound("Invalid ID " + userID)
+		appError.WriteErrorResponse(w, apiError)
 		return
 	}
 
@@ -63,8 +64,8 @@ func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		return
 	}
 
-	apiError := errors.NotFound("Invalid ID " + userID)
-	errors.WriteErrorResponse(w, apiError)
+	apiError := appError.NotFound("Invalid ID " + userID)
+	appError.WriteErrorResponse(w, apiError)
 }
 
 // updateUser :- Handler for updating user information
@@ -72,29 +73,29 @@ func getUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 func updateUser(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	userID := params.ByName("id")
 	if _, err := strconv.Atoi(userID); err != nil {
-		apiError := errors.NotFound("Invalid ID " + userID)
-		errors.WriteErrorResponse(w, apiError)
+		apiError := appError.NotFound("Invalid ID " + userID)
+		appError.WriteErrorResponse(w, apiError)
 		return
 	}
 
 	if _, ok := models.UserStore[userID]; !ok {
-		apiError := errors.NotFound("Invalid ID " + userID)
-		errors.WriteErrorResponse(w, apiError)
+		apiError := appError.NotFound("Invalid ID " + userID)
+		appError.WriteErrorResponse(w, apiError)
 		return
 	}
 
 	userInfo := models.UserStore[userID]
 
 	var updatedUser models.User
-	errorParam := errors.Params{"allowedParams": []string{"first_name", "last_name"}}
+	errorParam := appError.Params{"allowedParams": []string{"first_name", "last_name"}}
 
 	if r.Body == nil {
-		errors.WriteErrorResponse(w, errors.GenericError(http.StatusBadRequest, errorParam, "INVALID_DATA", "Please provide valid data"))
+		appError.WriteErrorResponse(w, appError.GenericError(http.StatusBadRequest, errorParam, "INVALID_DATA", "Please provide valid data"))
 		return
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&updatedUser); err != nil {
-		errors.WriteErrorResponse(w, errors.GenericError(http.StatusBadRequest, errorParam, "INVALID_DATA", "Please provide valid data"))
+		appError.WriteErrorResponse(w, appError.GenericError(http.StatusBadRequest, errorParam, "INVALID_DATA", "Please provide valid data"))
 		return
 	}
 
@@ -150,6 +151,9 @@ func GenerateUserRoutes() []router.Route {
 // later to support different formats and behaviours without
 // changing the interface.
 func decode(r *http.Request, v ok) error {
+	if r.Body == nil {
+		return errors.New("Invalid Body")
+	}
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
 		return err
 	}

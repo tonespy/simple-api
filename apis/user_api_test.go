@@ -29,13 +29,14 @@ func TestUserAPI_CreateUser(t *testing.T) {
 	req, err := http.NewRequest("POST", "/user", nil)
 	assert.Nil(t, err, "Invalid Post request")
 
-	assert.Panics(t, func() { mockRequestHandler(req, "POST", "/user", createUser) })
+	recorder := mockRequestHandler(req, "POST", "/user", createUser)
+	assert.Equal(t, recorder.Code, http.StatusBadRequest)
 
 	bufferBody := `{"email": "abc@email.com", "password": "password"}`
 	req, err = http.NewRequest("POST", "/user", bytes.NewBufferString(bufferBody))
 	assert.Nil(t, err)
 
-	recorder := mockRequestHandler(req, "POST", "/user", createUser)
+	recorder = mockRequestHandler(req, "POST", "/user", createUser)
 	assert.Equal(t, recorder.Code, http.StatusBadRequest)
 
 	bufferBody = `{"first_name": "Abubakar", "last_name": "Oladeji", "email": "abc@email.com", "password": "password"}`
